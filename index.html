@@ -2,13 +2,17 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>10-1 柱體和錐體的分類與命名</title>
     <style>
         body { 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; 
+            margin: 0; display: flex; flex-direction: column; 
+            /* 針對平板/手機瀏覽器的神器：動態高度，扣除上下工具列 */
+            height: 100vh; height: 100dvh; 
             font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Heiti TC', sans-serif; 
             background: #f4f7f6; overflow: hidden;
+            /* 防止平板上滑動時選取到文字或拉動整個網頁 */
+            user-select: none; -webkit-user-select: none; touch-action: none;
         }
         
         .nav-bar {
@@ -70,10 +74,9 @@
             background: rgba(255,255,255,0.95); padding: 12px 24px; border-radius: 30px;
             color: #2d3748; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             z-index: 15; text-align: center; border: 2px solid #4299e1; transition: opacity 0.5s;
-            white-space: nowrap;
+            white-space: nowrap; pointer-events: none;
         }
 
-        /* 畫廊模式的大標籤 */
         .gallery-title-zone {
             position: absolute; font-size: 24px; font-weight: bold;
             color: #2c5282; padding: 8px 30px; background: rgba(255,255,255,0.98);
@@ -90,26 +93,33 @@
         }
 
         .action-bar {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            /* 針對平板底部安全距離進行優化，把按鈕提高 */
+            position: absolute; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); 
+            left: 50%; transform: translateX(-50%);
             display: flex; gap: 30px; z-index: 25; transition: transform 0.5s ease, opacity 0.5s;
         }
         .action-hidden { transform: translate(-50%, 150px); opacity: 0; pointer-events: none; }
 
         .btn-classify {
-            padding: 15px 35px; font-size: 20px; font-weight: bold; border-radius: 50px;
+            padding: 18px 35px; font-size: 22px; font-weight: bold; border-radius: 50px;
             cursor: pointer; border: none; color: white; transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); width: 220px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.2); width: 220px;
+            /* 讓觸控區域更好按 */
+            touch-action: manipulation;
         }
-        .btn-classify:active { transform: translateY(2px); }
+        .btn-classify:active { transform: translateY(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .btn-left { background: #3182ce; }
         .btn-right { background: #dd6b20; }
 
         #btn-gallery-next {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            position: absolute; bottom: calc(50px + env(safe-area-inset-bottom, 0px)); 
+            left: 50%; transform: translateX(-50%); 
             display: none; z-index: 50; background: #48bb78; color: white; border: none; 
-            padding: 15px 45px; font-size: 22px; font-weight: bold; border-radius: 50px;
+            padding: 18px 45px; font-size: 22px; font-weight: bold; border-radius: 50px;
             cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2); transition: all 0.2s;
+            touch-action: manipulation;
         }
+        #btn-gallery-next:active { transform: translate(-50%, 4px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
         .gallery-label {
             position: absolute; font-weight: bold; font-size: 16px; 
@@ -120,6 +130,7 @@
         }
         
         #gallery-labels-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;}
+        
         .shake { animation: shake 0.4s both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-2px, 0, 0); }
@@ -190,6 +201,7 @@
 
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true; 
+            controls.enablePan = false; // 關閉平移，在平板上體驗更好
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.85));
             scene.add(new THREE.DirectionalLight(0xffffff, 0.6).position.set(20, 40, 20));
@@ -350,8 +362,9 @@
                 }
             }
 
-            document.getElementById('btn-left').addEventListener('click', () => handleClassify('left'));
-            document.getElementById('btn-right').addEventListener('click', () => handleClassify('right'));
+            // 改用 pointerdown 增強平板點擊反應速度
+            document.getElementById('btn-left').addEventListener('pointerdown', (e) => { e.preventDefault(); handleClassify('left'); });
+            document.getElementById('btn-right').addEventListener('pointerdown', (e) => { e.preventDefault(); handleClassify('right'); });
 
             function showGallery(stage) {
                 document.getElementById('left-panel').classList.add('panel-hidden');
@@ -397,14 +410,12 @@
                 titleLeft.style.display = 'block'; titleRight.style.display = 'block';
                 document.getElementById('gallery-divider').style.display = 'block';
 
-                // ★ 關鍵修復：提早啟動 isGalleryMode 並給予資料，讓標籤座標立刻生效
                 isGalleryMode = true;
                 currentGalleryShapes = shapesToShow;
 
                 const startCamPos = camera.position.clone();
                 const targetCamPos = new THREE.Vector3(0, 0, 80); 
 
-                // 立刻預備好所有形體與位置
                 shapesToShow.forEach(s => {
                     scene.add(s.obj); s.obj.scale.set(0.01, 0.01, 0.01);
                     let tx = 0, ty = 0; 
@@ -441,7 +452,6 @@
                     }
                 });
 
-                // ★ 關鍵修復：將攝影機移動與形體放大合併成一個 1.2 秒的流暢過場
                 animateValue(1200, (p) => { 
                     camera.position.lerpVectors(startCamPos, targetCamPos, easeInOut(p)); 
                     camera.lookAt(0,0,0); 
