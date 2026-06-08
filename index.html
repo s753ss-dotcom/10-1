@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10-1 柱體和錐體的分類與命名</title>
+    <style>
+        body { 
+            margin: 0; display: flex; flex-direction: column; height: 100vh; 
+            font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Heiti TC', sans-serif; 
+            background: #f4f7f6; overflow: hidden;
+        }
+        
+        .nav-bar {
+            background: #2c5282; padding: 15px 20px; color: white; font-size: 22px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center; z-index: 30;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .main-workspace {
+            display: flex; flex-direction: row; flex-grow: 1; position: relative; overflow: hidden;
+        }
+
+        .side-panel {
+            width: 250px; background: #fff; padding: 20px 15px; box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; z-index: 20; transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        .left-panel { border-right: 2px solid #e2e8f0; }
+        .right-panel { border-left: 2px solid #e2e8f0; }
+
+        .panel-hidden { display: none !important; }
+
+        .panel-title {
+            text-align: center; font-size: 20px; font-weight: bold; color: #2c5282;
+            padding-bottom: 12px; border-bottom: 3px solid #63b3ed; margin-top: 0; margin-bottom: 15px;
+        }
+
+        .thumbnail-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start;
+        }
+
+        .thumb-card {
+            background: #fffcf2; border: 2px solid #fbd38d; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .thumb-card img { width: 70px; height: 70px; object-fit: contain; }
+        .thumb-name { font-size: 16px; font-weight: bold; color: #2c5282; margin-top: 8px; text-align: center; }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .center-stage {
+            flex-grow: 1; position: relative;
+            background: radial-gradient(circle at center, #edf2f7 0%, #cbd5e0 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #canvas-container {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%; cursor: grab;
+        }
+
+        .instruction-box {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.95); padding: 12px 24px; border-radius: 30px;
+            color: #2d3748; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 15; text-align: center; border: 2px solid #4299e1; transition: opacity 0.5s;
+            white-space: nowrap;
+        }
+
+        /* 畫廊模式的大標籤 */
+        .gallery-title-zone {
+            position: absolute; font-size: 24px; font-weight: bold;
+            color: #2c5282; padding: 8px 30px; background: rgba(255,255,255,0.98);
+            border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: 3px solid #63b3ed; display: none; z-index: 15;
+            transform: translate(-50%, -50%); white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .gallery-divider {
+            position: absolute; top: 10%; bottom: 10%; left: 50%;
+            width: 2px; background: rgba(0, 0, 0, 0.1);
+            transform: translateX(-50%); display: none; z-index: 5;
+        }
+
+        .action-bar {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 30px; z-index: 25; transition: transform 0.5s ease, opacity 0.5s;
+        }
+        .action-hidden { transform: translate(-50%, 150px); opacity: 0; pointer-events: none; }
+
+        .btn-classify {
+            padding: 15px 35px; font-size: 20px; font-weight: bold; border-radius: 50px;
+            cursor: pointer; border: none; color: white; transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); width: 220px;
+        }
+        .btn-classify:active { transform: translateY(2px); }
+        .btn-left { background: #3182ce; }
+        .btn-right { background: #dd6b20; }
+
+        #btn-gallery-next {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            display: none; z-index: 50; background: #48bb78; color: white; border: none; 
+            padding: 15px 45px; font-size: 22px; font-weight: bold; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.2); transition: all 0.2s;
+        }
+
+        .gallery-label {
+            position: absolute; font-weight: bold; font-size: 16px; 
+            padding: 6px 16px; border-radius: 10px; 
+            pointer-events: none; transform: translate(-50%, -50%); 
+            background: rgba(255,255,255,0.95); box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            border: 2px solid; white-space: nowrap; display: none; z-index: 10;
+        }
+        
+        #gallery-labels-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;}
+        .shake { animation: shake 0.4s both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="nav-bar">10-1 柱體和錐體的分類與命名</div>
+
+    <div class="main-workspace">
+        <div id="left-panel" class="side-panel left-panel">
+            <h2 id="left-title" class="panel-title">像柱子一樣</h2>
+            <div id="left-items" class="thumbnail-grid"></div>
+        </div>
+
+        <div class="center-stage" id="center-stage">
+            <div id="instruction" class="instruction-box">系統準備中...</div>
+            <div id="gallery-title-left" class="gallery-title-zone"></div>
+            <div id="gallery-title-right" class="gallery-title-zone"></div>
+            <div id="gallery-divider" class="gallery-divider"></div>
+            
+            <div id="canvas-container"></div>
+            <div id="gallery-labels-container"></div>
+            
+            <div id="action-bar" class="action-bar action-hidden">
+                <button id="btn-left" class="btn-classify btn-left">像柱子一樣</button>
+                <button id="btn-right" class="btn-classify btn-right">頂端尖尖的</button>
+            </div>
+            
+            <button id="btn-gallery-next">進入下一關 ➔</button>
+        </div>
+
+        <div id="right-panel" class="side-panel right-panel">
+            <h2 id="right-title" class="panel-title">頂端尖尖的</h2>
+            <div id="right-items" class="thumbnail-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function lerp(start, end, t) { return start + (end - start) * t; }
+            function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
+            function animateValue(duration, updateFn, completeFn) {
+                let start = null;
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    let progress = (timestamp - start) / duration;
+                    if (progress > 1) progress = 1;
+                    updateFn(progress);
+                    if (progress < 1) requestAnimationFrame(step);
+                    else if (completeFn) completeFn();
+                }
+                requestAnimationFrame(step);
+            }
+
+            const container = document.getElementById('canvas-container');
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            container.appendChild(renderer.domElement);
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+            camera.position.set(0, 15, 35);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; 
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+            scene.add(new THREE.DirectionalLight(0xffffff, 0.6).position.set(20, 40, 20));
+
+            const resizeObserver = new ResizeObserver(() => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                if (w === 0 || h === 0) return;
+                renderer.setSize(w, h);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+            });
+            resizeObserver.observe(container);
+
+            const pastelColors = [
+                new THREE.Color(0xffb3ba), new THREE.Color(0xbae1ff), new THREE.Color(0xffffba), 
+                new THREE.Color(0xbaffc9), new THREE.Color(0xe8baff), new THREE.Color(0xffdfba)
+            ];
+            const singleColors = { cylinder: new THREE.Color(0x90cdf4), cone: new THREE.Color(0xf6e05e) };
+
+            function createMultiColorGeometry(rawGeom, isCurve) {
+                let geometry = rawGeom.clone().toNonIndexed();
+                geometry.computeVertexNormals();
+                const position = geometry.attributes.position;
+                const normal = geometry.attributes.normal;
+                const colors = new Float32Array(position.count * 3);
+                let colorMap = {}; let colorIndex = 0;
+                for (let i = 0; i < position.count; i += 3) {
+                    let ny = normal.getY(i);
+                    let nx = normal.getX(i), nz = normal.getZ(i);
+                    let key = isCurve ? (Math.abs(ny) > 0.99 ? "cap" + Math.sign(ny) : "side") : `${nx.toFixed(2)},${ny.toFixed(2)},${nz.toFixed(2)}`;
+                    if (!colorMap[key]) {
+                        if (isCurve) colorMap[key] = (key === "side") ? singleColors.cylinder : new THREE.Color(0xffffff);
+                        else { colorMap[key] = pastelColors[colorIndex % pastelColors.length]; colorIndex++; }
+                    }
+                    let c = colorMap[key];
+                    if (isCurve && rawGeom.type === 'ConeGeometry') c = singleColors.cone;
+                    for(let j=0; j<3; j++){ colors[(i+j)*3] = c.r; colors[(i+j)*3+1] = c.g; colors[(i+j)*3+2] = c.b; }
+                }
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                return geometry;
+            }
+
+            function createShapeGroup(rawGeom, isCurve, rotY = 0) {
+                const coloredGeom = createMultiColorGeometry(rawGeom, isCurve);
+                const mesh = new THREE.Mesh(coloredGeom, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }));
+                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(rawGeom, 30), new THREE.LineBasicMaterial({ color: 0x2d3748 }));
+                const group = new THREE.Group();
+                group.add(mesh); group.add(edges);
+                if(rotY !== 0) group.rotation.y = rotY;
+                return group;
+            }
+
+            const allShapes = [
+                { id: 1, type: 'prism', base: 'poly', name: '三角柱', colorHex: '#48bb78', obj: createShapeGroup(new THREE.CylinderGeometry(4, 4, 12, 3), false, -Math.PI/2) },
+                { id: 2, type: 'prism', base: 'poly', name: '四角柱', colorHex: '#4299e1', obj: createShapeGroup(new THREE.BoxGeometry(6, 12, 6), false) },
+                { id: 3, type: 'prism', base: 'poly', name: '六角柱', colorHex: '#9f7aea', obj: createShapeGroup(new THREE.CylinderGeometry(4, 4, 12, 6), false, Math.PI/6) },
+                { id: 4, type: 'prism', base: 'circle', name: '圓柱', colorHex: '#ed64a6', obj: createShapeGroup(new THREE.CylinderGeometry(4, 4, 12, 32), true) },
+                { id: 5, type: 'pyramid', base: 'poly', name: '三角錐', colorHex: '#f56565', obj: createShapeGroup(new THREE.ConeGeometry(5, 12, 3), false, -Math.PI/2) },
+                { id: 6, type: 'pyramid', base: 'poly', name: '四角錐', colorHex: '#ed8936', obj: createShapeGroup(new THREE.ConeGeometry(5, 12, 4), false, Math.PI/4) },
+                { id: 7, type: 'pyramid', base: 'poly', name: '六角錐', colorHex: '#d69e2e', obj: createShapeGroup(new THREE.ConeGeometry(5, 12, 6), false, Math.PI/6) },
+                { id: 8, type: 'pyramid', base: 'circle', name: '圓錐', colorHex: '#38b2ac', obj: createShapeGroup(new THREE.ConeGeometry(4.5, 12, 32), true) }
+            ];
+
+            function generateThumbnails() {
+                const thumbRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                thumbRenderer.setSize(160, 160);
+                const thumbCam = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+                thumbCam.position.set(0, 10, 26); thumbCam.lookAt(0, 0, 0);
+                allShapes.forEach(s => {
+                    scene.add(s.obj); s.obj.rotation.set(0.2, 0.4, 0); 
+                    thumbRenderer.render(scene, thumbCam); s.thumbUrl = thumbRenderer.domElement.toDataURL("image/png");
+                    scene.remove(s.obj); s.obj.rotation.set(0, 0, 0); 
+                });
+                thumbRenderer.dispose();
+                initStage(1);
+            }
+
+            let currentStage = 1, queue = [], currentShapeIndex = 0, currentObj = null;
+            let isAnimating = false, isGalleryMode = false;
+            let currentGalleryShapes = [];
+
+            function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+            function initStage(stage) {
+                currentStage = stage;
+                document.getElementById('left-items').innerHTML = '';
+                document.getElementById('right-items').innerHTML = '';
+                document.getElementById('action-bar').classList.remove('action-hidden');
+                
+                document.getElementById('instruction').style.display = 'block';
+                document.getElementById('gallery-title-left').style.display = 'none';
+                document.getElementById('gallery-title-right').style.display = 'none';
+                document.getElementById('gallery-divider').style.display = 'none';
+
+                if (stage === 1) {
+                    document.getElementById('instruction').innerText = "第一關：觀察形體的外觀特徵來分類！";
+                    document.getElementById('left-title').innerText = "像柱子一樣";
+                    document.getElementById('right-title').innerText = "頂端尖尖的";
+                    document.getElementById('btn-left').innerText = "像柱子一樣";
+                    document.getElementById('btn-right').innerText = "頂端尖尖的";
+                    queue = [...allShapes]; shuffle(queue);
+                } else if (stage === 2) {
+                    document.getElementById('instruction').innerText = "第二關：仔細觀察【柱體】的底面形狀！";
+                    document.getElementById('left-title').innerText = "底面是多邊形";
+                    document.getElementById('right-title').innerText = "底面是圓形";
+                    document.getElementById('btn-left').innerText = "底面是多邊形";
+                    document.getElementById('btn-right').innerText = "底面是圓形";
+                    queue = allShapes.filter(s => s.type === 'prism'); shuffle(queue);
+                } else if (stage === 3) {
+                    document.getElementById('instruction').innerText = "第三關：仔細觀察【錐體】的底面形狀！";
+                    document.getElementById('left-title').innerText = "底面是多邊形";
+                    document.getElementById('right-title').innerText = "底面是圓形";
+                    document.getElementById('btn-left').innerText = "底面是多邊形";
+                    document.getElementById('btn-right').innerText = "底面是圓形";
+                    queue = allShapes.filter(s => s.type === 'pyramid'); shuffle(queue);
+                }
+                currentShapeIndex = 0; showNextShape();
+            }
+
+            function showNextShape() {
+                if (currentObj) scene.remove(currentObj);
+                if (currentShapeIndex >= queue.length) { 
+                    document.getElementById('action-bar').classList.add('action-hidden');
+                    showGallery(currentStage); 
+                    return; 
+                }
+                currentObj = queue[currentShapeIndex].obj;
+                currentObj.position.set(0, 0, 0);
+                currentObj.rotation.set(0.2, 0.4, 0); 
+                currentObj.scale.set(0.01, 0.01, 0.01); scene.add(currentObj);
+                animateValue(500, (p) => { const s = lerp(0.01, 1, easeInOut(p)); currentObj.scale.set(s, s, s); });
+            }
+
+            function handleClassify(btnClicked) {
+                if (isAnimating || !currentObj) return;
+                const shapeData = queue[currentShapeIndex];
+                let isCorrect = false;
+                if (currentStage === 1) {
+                    if (btnClicked === 'left' && shapeData.type === 'prism') isCorrect = true;
+                    if (btnClicked === 'right' && shapeData.type === 'pyramid') isCorrect = true;
+                } else {
+                    if (btnClicked === 'left' && shapeData.base === 'poly') isCorrect = true;
+                    if (btnClicked === 'right' && shapeData.base === 'circle') isCorrect = true;
+                }
+
+                if (isCorrect) {
+                    isAnimating = true;
+                    animateValue(500, (p) => { const s = lerp(1, 0.01, easeInOut(p)); currentObj.scale.set(s, s, s); }, () => {
+                        const card = document.createElement('div'); card.className = 'thumb-card';
+                        card.innerHTML = `<img src="${shapeData.thumbUrl}"><div class="thumb-name">???</div>`;
+                        document.getElementById(btnClicked === 'left' ? 'left-items' : 'right-items').appendChild(card);
+                        isAnimating = false; currentShapeIndex++; showNextShape();
+                    });
+                } else {
+                    document.getElementById('canvas-container').classList.add('shake');
+                    setTimeout(() => document.getElementById('canvas-container').classList.remove('shake'), 400);
+                }
+            }
+
+            document.getElementById('btn-left').addEventListener('click', () => handleClassify('left'));
+            document.getElementById('btn-right').addEventListener('click', () => handleClassify('right'));
+
+            function showGallery(stage) {
+                document.getElementById('left-panel').classList.add('panel-hidden');
+                document.getElementById('right-panel').classList.add('panel-hidden');
+                controls.enabled = false;
+                
+                allShapes.forEach(s => scene.remove(s.obj));
+                document.getElementById('gallery-labels-container').innerHTML = '';
+
+                let shapesToShow = [];
+                let btnText = "";
+                let nextAction = null;
+                let titleLeftText = "", titleRightText = "";
+
+                if (stage === 1) {
+                    shapesToShow = allShapes;
+                    titleLeftText = "柱體"; titleRightText = "錐體";
+                    btnText = "準備好了，進入第二關 ➔";
+                    nextAction = () => restoreWorkspace(2);
+                    document.getElementById('instruction').style.display = 'none';
+                } else if (stage === 2) {
+                    shapesToShow = allShapes.filter(s => s.type === 'prism');
+                    titleLeftText = "角柱"; titleRightText = "圓柱";
+                    btnText = "準備好了，進入第三關 ➔";
+                    nextAction = () => restoreWorkspace(3);
+                    document.getElementById('instruction').style.display = 'none';
+                } else if (stage === 3) {
+                    shapesToShow = allShapes.filter(s => s.type === 'pyramid');
+                    titleLeftText = "角錐"; titleRightText = "圓錐";
+                    btnText = "觀看完整總結畫廊 🎉";
+                    nextAction = () => showGallery(4);
+                    document.getElementById('instruction').style.display = 'none';
+                } else if (stage === 4) {
+                    shapesToShow = allShapes;
+                    titleLeftText = "柱體"; titleRightText = "錐體";
+                    btnText = ""; nextAction = null;
+                    document.getElementById('instruction').style.display = 'none';
+                }
+
+                const titleLeft = document.getElementById('gallery-title-left');
+                const titleRight = document.getElementById('gallery-title-right');
+                titleLeft.innerText = titleLeftText; titleRight.innerText = titleRightText;
+                titleLeft.style.display = 'block'; titleRight.style.display = 'block';
+                document.getElementById('gallery-divider').style.display = 'block';
+
+                // ★ 關鍵修復：提早啟動 isGalleryMode 並給予資料，讓標籤座標立刻生效
+                isGalleryMode = true;
+                currentGalleryShapes = shapesToShow;
+
+                const startCamPos = camera.position.clone();
+                const targetCamPos = new THREE.Vector3(0, 0, 80); 
+
+                // 立刻預備好所有形體與位置
+                shapesToShow.forEach(s => {
+                    scene.add(s.obj); s.obj.scale.set(0.01, 0.01, 0.01);
+                    let tx = 0, ty = 0; 
+                    
+                    if (stage === 1 || stage === 4) {
+                        if (s.type === 'prism') {
+                            tx = (s.id === 1 || s.id === 3) ? -24 : -12;
+                            ty = (s.id <= 2) ? 8 : -8;
+                        } else {
+                            tx = (s.id === 5 || s.id === 7) ? 12 : 24;
+                            ty = (s.id <= 6) ? 8 : -8;
+                        }
+                    } else if (stage === 2) {
+                        if (s.base === 'poly') { 
+                            if (s.id === 1) { tx = -24; ty = 8; }
+                            if (s.id === 2) { tx = -12; ty = 8; }
+                            if (s.id === 3) { tx = -18; ty = -8; }
+                        } else { tx = 18; ty = 0; }
+                    } else if (stage === 3) {
+                        if (s.base === 'poly') { 
+                            if (s.id === 5) { tx = -24; ty = 8; }
+                            if (s.id === 6) { tx = -12; ty = 8; }
+                            if (s.id === 7) { tx = -18; ty = -8; }
+                        } else { tx = 18; ty = 0; }
+                    }
+
+                    s.obj.position.set(tx, ty, 0); s.obj.rotation.set(0.15, 0.2, 0); 
+                    
+                    if (stage === 4) {
+                        const lbl = document.createElement('div');
+                        lbl.className = 'gallery-label'; lbl.id = `glbl-${s.id}`; lbl.innerText = s.name;
+                        lbl.style.borderColor = s.colorHex; lbl.style.color = s.colorHex;
+                        document.getElementById('gallery-labels-container').appendChild(lbl);
+                    }
+                });
+
+                // ★ 關鍵修復：將攝影機移動與形體放大合併成一個 1.2 秒的流暢過場
+                animateValue(1200, (p) => { 
+                    camera.position.lerpVectors(startCamPos, targetCamPos, easeInOut(p)); 
+                    camera.lookAt(0,0,0); 
+                    
+                    const sc = lerp(0.01, 1, easeInOut(p)); 
+                    shapesToShow.forEach(s => s.obj.scale.set(sc,sc,sc)); 
+                }, () => {
+                    if (stage === 4) {
+                        shapesToShow.forEach(s => {
+                            const el = document.getElementById(`glbl-${s.id}`);
+                            if (el) el.style.display = 'block';
+                        });
+                    }
+
+                    if (btnText !== "") {
+                        const nextBtn = document.getElementById('btn-gallery-next');
+                        nextBtn.innerText = btnText;
+                        nextBtn.style.display = 'block';
+                        nextBtn.onclick = () => {
+                            nextBtn.style.display = 'none';
+                            nextAction();
+                        };
+                    }
+                });
+            }
+
+            function restoreWorkspace(nextStage) {
+                isGalleryMode = false;
+                currentGalleryShapes = [];
+                allShapes.forEach(s => scene.remove(s.obj));
+                document.getElementById('gallery-labels-container').innerHTML = '';
+                document.getElementById('gallery-divider').style.display = 'none';
+                
+                document.getElementById('left-panel').classList.remove('panel-hidden');
+                document.getElementById('right-panel').classList.remove('panel-hidden');
+                
+                controls.enabled = true;
+                camera.position.set(0, 15, 35);
+                camera.lookAt(0,0,0);
+                initStage(nextStage);
+            }
+
+            const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+            let draggedObj = null, previousMousePosition = { x: 0, y: 0 };
+
+            container.addEventListener('pointerdown', (e) => {
+                if (!isGalleryMode) return;
+                const rect = container.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(scene.children, true);
+                if (intersects.length > 0) {
+                    let obj = intersects[0].object;
+                    while(obj.parent && obj.parent.type === 'Group' && obj.parent !== scene) { obj = obj.parent; }
+                    draggedObj = obj; previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+
+            container.addEventListener('pointermove', (e) => {
+                if (isGalleryMode && draggedObj) {
+                    draggedObj.rotation.y += (e.clientX - previousMousePosition.x) * 0.01;
+                    draggedObj.rotation.x += (e.clientY - previousMousePosition.y) * 0.01;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                }
+            });
+            window.addEventListener('pointerup', () => { draggedObj = null; });
+
+            const tempVec = new THREE.Vector3(); 
+            function animate() {
+                if(!isGalleryMode) controls.update(); 
+                
+                if(isGalleryMode) {
+                    currentGalleryShapes.forEach(s => {
+                        if(s.obj !== draggedObj) { s.obj.rotation.y += 0.005; }
+                    });
+                    
+                    const hw = container.clientWidth / 2, hh = container.clientHeight / 2;
+                    
+                    const titleLeftEl = document.getElementById('gallery-title-left');
+                    const titleRightEl = document.getElementById('gallery-title-right');
+                    
+                    tempVec.set(-18, 18, 0).project(camera);
+                    titleLeftEl.style.left = (tempVec.x * hw + hw) + 'px';
+                    titleLeftEl.style.top = (-tempVec.y * hh + hh) + 'px';
+                    
+                    tempVec.set(18, 18, 0).project(camera);
+                    titleRightEl.style.left = (tempVec.x * hw + hw) + 'px';
+                    titleRightEl.style.top = (-tempVec.y * hh + hh) + 'px';
+
+                    currentGalleryShapes.forEach(s => {
+                        const el = document.getElementById(`glbl-${s.id}`);
+                        if(el && el.style.display !== 'none') {
+                            tempVec.set(s.obj.position.x, s.obj.position.y - 8, s.obj.position.z).project(camera);
+                            el.style.left = (tempVec.x * hw + hw) + 'px'; 
+                            el.style.top = (-tempVec.y * hh + hh) + 'px';
+                        }
+                    });
+                }
+                renderer.render(scene, camera); 
+                requestAnimationFrame(animate); 
+            }
+
+            setTimeout(() => { generateThumbnails(); animate(); }, 100);
+        });
+    </script>
+</body>
+</html>
